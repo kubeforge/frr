@@ -2,8 +2,6 @@
 set -x
 echo "Running script to set up FRR."
 
-
-
 echo "ipv6" >> /etc/modules
 echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.d/01-disable-ipv6.conf
 
@@ -21,15 +19,18 @@ cp /etc/frr/bgpd.conf.sample /etc/frr/bgpd.conf
 
 sed -i "s/zebra=no/zebra=yes/g" /etc/frr/daemons
 sed -i "s/bgpd=no/bgpd=yes/g" /etc/frr/daemons
+sed -i "s/router\sbgp\s7675/\!router\sbgp\s7675/g" /etc/frr/bgpd.conf
 
 cat <<EOT >> /etc/frr/bgpd.conf
 router bgp $local_as
-neighbor KUBEFORGE$tenant_id peer-group KUBEFORGE$tenant_id
-neighbor KUBEFORGE$tenant_id remote-as $remote_as
-bgp listen range $bgp_listen_range peer-group KUBEFORGE$tenant_id
+  neighbor KUBEFORGE$tenant_id peer-group
+  neighbor KUBEFORGE$tenant_id remote-as $remote_as
+  bgp listen range $bgp_listen_range peer-group KUBEFORGE$tenant_id
 EOT
 
 echo "nameserver $nameserver" >> /etc/resolv.conf
+
+chown -R frr:frr /etc/frr/
 
 /etc/init.d/frr start
 
